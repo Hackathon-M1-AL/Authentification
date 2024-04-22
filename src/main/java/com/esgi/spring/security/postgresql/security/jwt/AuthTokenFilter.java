@@ -3,6 +3,8 @@ package com.esgi.spring.security.postgresql.security.jwt;
 import java.io.IOException;
 
 import com.esgi.spring.security.postgresql.security.services.UserDetailsServiceImpl;
+import com.esgi.spring.security.postgresql.utils.exception.ExpiredJwtToken;
+import com.esgi.spring.security.postgresql.utils.exception.SecurityException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,8 +44,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
       }
-    } catch (Exception e) {
-      logger.error("Cannot set user authentication: {}", e);
+    } catch (final SecurityException exception) {
+      logger.error("Cannot set user authentication: {}", exception.getMessage());
+      response.setStatus(exception.getHttpStatus());
+      response.getWriter().write("Unauthorized: Authentication token was invalid or expired.");
     }
 
     filterChain.doFilter(request, response);

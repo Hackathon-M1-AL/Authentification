@@ -9,6 +9,7 @@ import com.esgi.spring.security.postgresql.models.ERole;
 import com.esgi.spring.security.postgresql.payload.request.LoginRequest;
 import com.esgi.spring.security.postgresql.security.jwt.JwtUtils;
 import com.esgi.spring.security.postgresql.security.services.UserDetailsImpl;
+import com.esgi.spring.security.postgresql.utils.exception.ExpiredJwtToken;
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
@@ -138,7 +139,8 @@ public class AuthController {
 
     @GetMapping("/verifyToken")
     public ResponseEntity<?> verifyToken(@RequestHeader("Authorization")
-                                         String authHeader) {
+                                         String authHeader) throws
+                                                            ExpiredJwtToken {
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.badRequest()
@@ -148,14 +150,12 @@ public class AuthController {
                                  );
         }
 
-        logger.atError().log("in");
         String token = authHeader.substring(7); // Remove "Bearer " prefix
 
         if (!jwtUtils.validateJwtToken(token)) {
             return ResponseEntity.badRequest()
                                  .body(new MessageResponse("Error: Invalid JWT Token."));
         }
-        logger.atError().log("after {}, {}", token, authHeader);
 
         String username = jwtUtils.getUserNameFromJwtToken(token);
         UserDetailsImpl userDetails = (UserDetailsImpl) userRepository.findByUsername(
