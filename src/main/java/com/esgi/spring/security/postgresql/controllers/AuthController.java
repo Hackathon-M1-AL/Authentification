@@ -11,6 +11,7 @@ import com.esgi.spring.security.postgresql.security.jwt.JwtUtils;
 import com.esgi.spring.security.postgresql.security.services.UserDetailsImpl;
 import jakarta.validation.Valid;
 
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,6 +33,8 @@ import com.esgi.spring.security.postgresql.repository.UserRepository;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    Logger logger = org.slf4j.LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     AuthenticationManager authenticationManager;
@@ -104,14 +107,14 @@ public class AuthController {
         } else {
             strRoles.forEach(role -> {
                 switch (role) {
-                    case "admin":
+                    case "ROLE_ADMIN":
                         Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
                                                        .orElseThrow(() -> new RuntimeException(
                                                                "Error: Role is not found."));
                         roles.add(adminRole);
 
                         break;
-                    case "mod":
+                    case "ROLE_MODERATOR":
                         Role modRole = roleRepository.findByName(ERole.ROLE_MODERATOR)
                                                      .orElseThrow(() -> new RuntimeException(
                                                              "Error: Role is not found."));
@@ -133,9 +136,10 @@ public class AuthController {
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
 
-    @PostMapping("/verifyToken")
+    @GetMapping("/verifyToken")
     public ResponseEntity<?> verifyToken(@RequestHeader("Authorization")
                                          String authHeader) {
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.badRequest()
                                  .body(new MessageResponse(
@@ -144,12 +148,14 @@ public class AuthController {
                                  );
         }
 
+        logger.atError().log("in");
         String token = authHeader.substring(7); // Remove "Bearer " prefix
 
         if (!jwtUtils.validateJwtToken(token)) {
             return ResponseEntity.badRequest()
                                  .body(new MessageResponse("Error: Invalid JWT Token."));
         }
+        logger.atError().log("after {}, {}", token, authHeader);
 
         String username = jwtUtils.getUserNameFromJwtToken(token);
         UserDetailsImpl userDetails = (UserDetailsImpl) userRepository.findByUsername(
@@ -163,10 +169,6 @@ public class AuthController {
                                         .map(item -> item.getAuthority())
                                         .collect(Collectors.toList());
 
-        return ResponseEntity.ok(new JwtResponse(token,
-                                                 userDetails.getId(),
-                                                 userDetails.getUsername(),
-                                                 userDetails.getEmail(),
-                                                 roles));
+        return ResponseEntity.ok("OK");
     }
 }

@@ -2,6 +2,7 @@ package com.esgi.spring.security.postgresql.payload.response;
 
 import java.util.List;
 
+
 public class JwtResponse {
   private String token;
   private String type = "Bearer";
