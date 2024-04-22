@@ -1,8 +1,8 @@
-package com.bezkoder.spring.security.postgresql.hexa.domain.persistence.adapter;
+package com.esgi.spring.security.postgresql.hexa.domain.persistence.adapter;
 
-import com.bezkoder.spring.security.postgresql.hexa.domain.Test;
-import com.bezkoder.spring.security.postgresql.hexa.domain.spi.IDao;
-import com.bezkoder.spring.security.postgresql.repository.UserRepository;
+import com.esgi.spring.security.postgresql.hexa.domain.Test;
+import com.esgi.spring.security.postgresql.hexa.domain.spi.IDao;
+import com.esgi.spring.security.postgresql.repository.UserRepository;
 
 public class UserDao implements IDao {
     private final UserRepository userRepository;

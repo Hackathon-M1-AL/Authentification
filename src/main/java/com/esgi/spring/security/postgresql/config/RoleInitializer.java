@@ -1,8 +1,8 @@
-package com.bezkoder.spring.security.postgresql.config;
+package com.esgi.spring.security.postgresql.config;
 
-import com.bezkoder.spring.security.postgresql.models.ERole;
-import com.bezkoder.spring.security.postgresql.models.Role;
-import com.bezkoder.spring.security.postgresql.repository.RoleRepository;
+import com.esgi.spring.security.postgresql.models.ERole;
+import com.esgi.spring.security.postgresql.models.Role;
+import com.esgi.spring.security.postgresql.repository.RoleRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

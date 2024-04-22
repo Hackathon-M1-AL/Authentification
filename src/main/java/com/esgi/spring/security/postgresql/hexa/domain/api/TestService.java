@@ -1,7 +1,7 @@
-package com.bezkoder.spring.security.postgresql.hexa.domain.api;
+package com.esgi.spring.security.postgresql.hexa.domain.api;
 
-import com.bezkoder.spring.security.postgresql.hexa.domain.Test;
-import com.bezkoder.spring.security.postgresql.hexa.domain.spi.IDao;
+import com.esgi.spring.security.postgresql.hexa.domain.Test;
+import com.esgi.spring.security.postgresql.hexa.domain.spi.IDao;
 
 public class TestService implements IService{
 
