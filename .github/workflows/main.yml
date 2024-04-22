@@ -23,8 +23,8 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [build]
     env:
-      IMAGE_NAME: authentification-service
-      CONTAINER_NAME: authentification-service
+      TEST_TAG: ghcr.io/hackathon-m1-al/frontend/authentification-service:test
+      LATEST_TAG: ghcr.io/hackathon-m1-al/frontend/authentification-service:latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
         - uses: actions/checkout@v3
