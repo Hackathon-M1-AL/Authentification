@@ -9,7 +9,8 @@ import com.esgi.spring.security.postgresql.models.ERole;
 import com.esgi.spring.security.postgresql.payload.request.LoginRequest;
 import com.esgi.spring.security.postgresql.security.jwt.JwtUtils;
 import com.esgi.spring.security.postgresql.security.services.UserDetailsImpl;
-import com.esgi.spring.security.postgresql.utils.exception.ExpiredJwtToken;
+import com.esgi.spring.security.postgresql.utils.exception.CustomMalformedJwtException;
+import com.esgi.spring.security.postgresql.utils.exception.ExpiredJwtTokenException;
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
@@ -140,7 +141,8 @@ public class AuthController {
     @GetMapping("/verifyToken")
     public ResponseEntity<?> verifyToken(@RequestHeader("Authorization")
                                          String authHeader) throws
-                                                            ExpiredJwtToken {
+                                                            ExpiredJwtTokenException,
+                                                            CustomMalformedJwtException {
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.badRequest()

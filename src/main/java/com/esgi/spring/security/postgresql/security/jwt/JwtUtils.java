@@ -3,10 +3,11 @@ package com.esgi.spring.security.postgresql.security.jwt;
 import java.security.Key;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.esgi.spring.security.postgresql.security.services.UserDetailsImpl;
-import com.esgi.spring.security.postgresql.utils.exception.ExpiredJwtToken;
+import com.esgi.spring.security.postgresql.utils.exception.CustomMalformedJwtException;
+import com.esgi.spring.security.postgresql.utils.exception.ExpiredJwtTokenException;
+import com.esgi.spring.security.postgresql.utils.exception.TechnicalJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -59,8 +60,7 @@ public class JwtUtils {
                    .getSubject();
     }
 
-    public boolean validateJwtToken(String authToken) throws
-                                                      ExpiredJwtToken {
+    public boolean validateJwtToken(String authToken) {
         try {
             Jwts.parserBuilder()
                 .setSigningKey(key())
@@ -69,15 +69,16 @@ public class JwtUtils {
             return true;
         } catch (MalformedJwtException exception) {
             logger.error("Invalid JWT token: {}", exception.getMessage());
+            throw new CustomMalformedJwtException();
         } catch (ExpiredJwtException exception) {
             logger.error("JWT token is expired: {}", exception.getMessage());
-            throw new ExpiredJwtToken(exception.getMessage());
+            throw new ExpiredJwtTokenException();
         } catch (UnsupportedJwtException exception) {
             logger.error("JWT token is unsupported: {}", exception.getMessage());
+            throw new TechnicalJwtException();
         } catch (IllegalArgumentException exception) {
             logger.error("JWT claims string is empty: {}", exception.getMessage());
+            throw new TechnicalJwtException();
         }
-
-        return false;
     }
 }
