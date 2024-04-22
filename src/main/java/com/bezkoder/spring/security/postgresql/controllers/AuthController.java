@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,21 +35,18 @@ import com.bezkoder.spring.security.postgresql.security.services.UserDetailsImpl
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
+@AllArgsConstructor
 @RequestMapping("/api/auth")
 public class AuthController {
-  @Autowired
+
   AuthenticationManager authenticationManager;
 
-  @Autowired
   UserRepository userRepository;
 
-  @Autowired
   RoleRepository roleRepository;
 
-  @Autowired
   PasswordEncoder encoder;
 
-  @Autowired
   JwtUtils jwtUtils;
 
   @PostMapping("/signin")
