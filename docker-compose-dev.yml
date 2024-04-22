@@ -2,10 +2,11 @@ version: "3.8"
 name: authentification
 services:
   postgres:
+    container_name: postgres
     image: postgres:latest
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 123
       POSTGRES_DB: testdb
     ports:
-      - 5432
+      - 5432:5432
