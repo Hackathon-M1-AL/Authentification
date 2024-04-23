@@ -179,39 +179,17 @@ public class AuthController {
     }
 
     @PostMapping("/refreshtoken")
-    public ResponseEntity<?> refreshtoken(@Valid @RequestBody TokenRefreshRequest request,
-                                          @RequestHeader("Authorization")
-                                          String authorizationHeader) {
-        String requestRefreshToken = authorizationHeader.split(" ")[1];
+    public ResponseEntity<?> refreshtoken(@Valid @RequestBody TokenRefreshRequest request) {
+        String requestRefreshToken = request.getRefreshToken();
 
         return refreshTokenService.findByToken(requestRefreshToken)
-                                  .map(refreshTokenService::verifyExpiration)
-                                  .map(RefreshToken::getUser)
-                                  .map(user -> {
-                                      String jwt = jwtUtils.generateJwtTokenFromUsernameAndOldTokenRoles(
-                                              user.getUsername());
-                                      return ResponseEntity.ok(new TokenRefreshResponse(
-                                              jwt,
-                                              requestRefreshToken));
-                                  })
-                                  .orElseThrow(() -> new TokenRefreshException());
-
-//        refreshTokenService.findByToken(requestRefreshToken);
-//
-//        String requestRefreshToken = request.getRefreshToken();
-//
-//        Authentication authentication = authenticationManager
-//                .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
-//
-//        return refreshTokenService.findByToken(requestRefreshToken)
-//                .map(refreshTokenService::verifyExpiration)
-//                .map(RefreshToken::getUser)
-//                .map(user -> {
-//                    String token =
-//                            jwtUtils.generateRefreshTokenFromUsername(user.getUsername());
-//                    return ResponseEntity.ok(new TokenRefreshResponse(token, requestRefreshToken));
-//                })
-//                .orElseThrow(() -> new TokenRefreshException());
+                .map(refreshTokenService::verifyExpiration)
+                .map(RefreshToken::getUser)
+                .map(user -> {
+                    String token = jwtUtils.generateTokenFromUsername(user.getUsername());
+                    return ResponseEntity.ok(new TokenRefreshResponse(token, requestRefreshToken));
+                })
+                .orElseThrow(() -> new TokenRefreshException());
     }
 
     @PostMapping("/changepassword")

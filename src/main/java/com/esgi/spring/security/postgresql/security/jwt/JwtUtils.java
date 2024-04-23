@@ -59,37 +59,24 @@ public class JwtUtils {
                    .compact();
     }
 
-    public String generateJwtTokenFromUsernameAndOldTokenRoles(String userName/*,
-            String oldToken*/) {
+    public String generateTokenFromUsername(String username) {
 
-        User user = userRepository.findByUsername(userName)
-                                  .get();
+        User user = userRepository.findByUsername(username)
+                .get();
         Set<Role> rolesSet = user.getRoles();
 
         List<String> roles = rolesSet.stream()
-                                     .map(Role::getName)
-                                     .map(ERole::name)
-                                     .toList();
-
-//        List<String> roles = claims.get("roles", List.class);
+                .map(Role::getName)
+                .map(ERole::name)
+                .toList();
 
         return Jwts.builder()
-                   .setSubject(userName)
-                   .setIssuedAt(new Date())
-                   .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
-                   .signWith(key(), SignatureAlgorithm.HS256)
-                   .claim("roles", roles)
-                   .compact();
-    }
-
-    public String generateRefreshTokenFromUsername(String username) {
-        return Jwts.builder()
-                   .setSubject(username)
-                   .setIssuedAt(new Date())
-                   .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                   .signWith(key(), SignatureAlgorithm.HS256)
-
-                   .compact();
+                .setSubject(username)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .signWith(key(), SignatureAlgorithm.HS256)
+                .claim("roles", roles)
+                .compact();
     }
 
     private Key key() {
