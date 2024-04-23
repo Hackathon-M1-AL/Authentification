@@ -13,10 +13,12 @@ import com.esgi.spring.security.postgresql.payload.request.TokenRefreshRequest;
 import com.esgi.spring.security.postgresql.payload.response.TokenRefreshResponse;
 import com.esgi.spring.security.postgresql.security.jwt.JwtUtils;
 import com.esgi.spring.security.postgresql.security.services.RefreshTokenService;
+import com.esgi.spring.security.postgresql.security.services.TokenBlacklist;
 import com.esgi.spring.security.postgresql.security.services.UserDetailsImpl;
 import com.esgi.spring.security.postgresql.utils.exception.CustomMalformedJwtException;
 import com.esgi.spring.security.postgresql.utils.exception.CustomExpiredJwtTokenException;
 import com.esgi.spring.security.postgresql.utils.exception.TokenRefreshException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
@@ -29,6 +31,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import com.esgi.spring.security.postgresql.models.Role;
@@ -63,6 +66,9 @@ public class AuthController {
 
     @Autowired
     RefreshTokenService refreshTokenService;
+
+    @Autowired
+    TokenBlacklist tokenBlacklist;
 
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(
@@ -194,34 +200,47 @@ public class AuthController {
 
     @PostMapping("/changepassword")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    // Restrict access to authenticated users with USER or ADMIN role
     public ResponseEntity<?> changePassword(
-            @Valid @RequestBody ChangePasswordRequest changePasswordRequest) {
+            @Valid @RequestBody ChangePasswordRequest changePasswordRequest,
+            HttpServletRequest request) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext()
-                                                                             .getAuthentication()
-                                                                             .getPrincipal();
+                .getAuthentication()
+                .getPrincipal();
         User user = userRepository.findById(userDetails.getId())
-                                  .orElseThrow(() -> new RuntimeException(
-                                          "Error: User not found."));
+                .orElseThrow(() -> new RuntimeException(
+                        "Error: User not found."));
 
         if (!encoder.matches(changePasswordRequest.getOldPassword(),
-                             user.getPassword())) {
+                user.getPassword())) {
             return ResponseEntity.badRequest()
-                                 .body(new MessageResponse(
-                                         "Error: Old password is incorrect."));
+                    .body(new MessageResponse(
+                            "Error: Old password is incorrect."));
         }
 
         user.setPassword(encoder.encode(changePasswordRequest.getNewPassword()));
         userRepository.save(user);
 
+        // Invalidate the current authentication token
+        String token = extractTokenFromRequest(request);
+        tokenBlacklist.blacklistToken(token);
+
         return ResponseEntity.ok(new MessageResponse("Password changed successfully!"));
     }
 
+    private String extractTokenFromRequest(HttpServletRequest request) {
+        final String authorizationHeader = request.getHeader("Authorization");
+
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            return authorizationHeader.substring(7);
+        }
+
+        return null;
+    }
+
     @PostMapping("/signout")
-    public ResponseEntity<?> logoutUser() {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Long userId = userDetails.getId();
-        refreshTokenService.deleteByUserId(userId);
-        return ResponseEntity.ok(new MessageResponse("Log out successful!"));
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+        String token = extractTokenFromRequest(request);
+        tokenBlacklist.blacklistToken(token);
+        return ResponseEntity.ok(new MessageResponse("Logged out successfully!"));
     }
 }
