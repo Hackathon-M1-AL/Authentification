@@ -7,6 +7,10 @@ public class MessageResponse {
     this.message = message;
   }
 
+  public MessageResponse(Exception exception) {
+    this.message = exception.getMessage();
+  }
+
   public String getMessage() {
     return message;
   }

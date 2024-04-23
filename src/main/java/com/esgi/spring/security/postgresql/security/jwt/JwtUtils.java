@@ -2,18 +2,15 @@ package com.esgi.spring.security.postgresql.security.jwt;
 
 import java.security.Key;
 import java.util.Date;
-import java.util.List;
 
 import com.esgi.spring.security.postgresql.security.services.UserDetailsImpl;
 import com.esgi.spring.security.postgresql.utils.exception.CustomMalformedJwtException;
-import com.esgi.spring.security.postgresql.utils.exception.ExpiredJwtTokenException;
-import com.esgi.spring.security.postgresql.utils.exception.TechnicalJwtException;
+import com.esgi.spring.security.postgresql.utils.exception.CustomExpiredJwtTokenException;
+import com.esgi.spring.security.postgresql.utils.exception.CustomTechnicalJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.*;
@@ -36,11 +33,11 @@ public class JwtUtils {
 
     public String generateTokenFromUsername(String username) {
         return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .signWith(key(), SignatureAlgorithm.HS256)
-                .compact();
+                   .setSubject(username)
+                   .setIssuedAt(new Date())
+                   .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                   .signWith(key(), SignatureAlgorithm.HS256)
+                   .compact();
     }
 
     private Key key() {
@@ -49,32 +46,35 @@ public class JwtUtils {
 
     public String getUserNameFromJwtToken(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(key())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+                   .setSigningKey(key())
+                   .build()
+                   .parseClaimsJws(token)
+                   .getBody()
+                   .getSubject();
     }
 
     public boolean validateJwtToken(String authToken) {
         try {
             Jwts.parserBuilder()
-                    .setSigningKey(key())
-                    .build()
-                    .parse(authToken);
+                .setSigningKey(key())
+                .build()
+                .parse(authToken);
             return true;
         } catch (MalformedJwtException exception) {
             logger.error("Invalid JWT token: {}", exception.getMessage());
             throw new CustomMalformedJwtException();
         } catch (ExpiredJwtException exception) {
             logger.error("JWT token is expired: {}", exception.getMessage());
-            throw new ExpiredJwtTokenException();
+            throw new CustomExpiredJwtTokenException();
         } catch (UnsupportedJwtException exception) {
             logger.error("JWT token is unsupported: {}", exception.getMessage());
-            throw new TechnicalJwtException();
+            throw new CustomTechnicalJwtException();
         } catch (IllegalArgumentException exception) {
             logger.error("JWT claims string is empty: {}", exception.getMessage());
-            throw new TechnicalJwtException();
+            throw new CustomTechnicalJwtException();
+        } catch (SignatureException exception) {
+            logger.error("JWT signature does not match: {}", exception.getMessage());
+            throw new CustomTechnicalJwtException();
         }
     }
 }
