@@ -21,6 +21,7 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -134,40 +135,29 @@ public class AuthController {
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
 
-    @GetMapping("/verifyToken")
-    public ResponseEntity<?> verifyToken(@RequestHeader("Authorization")
-                                         String authHeader) throws
-                                                            CustomExpiredJwtTokenException,
-                                                            CustomMalformedJwtException {
+    @GetMapping("/verifytoken")
+    public ResponseEntity<?> verifyToken(@RequestHeader("Authorization") String tokenHeader) {
+        boolean isValid = validateToken(tokenHeader);
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.badRequest()
-                                 .body(new MessageResponse(
-                                               "Error: Authorization header is missing or does not contain Bearer token."
-                                       )
-                                 );
+        if (isValid) {
+            return ResponseEntity.ok(new MessageResponse("Token is valid"));
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse("Token is invalid or expired"));
         }
+    }
 
-        String token = authHeader.substring(7); // Remove "Bearer " prefix
-
-        if (!jwtUtils.validateJwtToken(token)) {
-            return ResponseEntity.badRequest()
-                                 .body(new MessageResponse("Error: Invalid JWT Token."));
+    // Extract and validate JWT token from the Authorization header
+    private boolean validateToken(String header) {
+        if (header != null && header.startsWith("Bearer ")) {
+            String jwtToken = header.substring(7); // Remove "Bearer " prefix
+            try {
+                return jwtUtils.validateJwtToken(jwtToken);
+            } catch (Exception e) {
+                // Handle any exceptions if needed
+                return false;
+            }
         }
-
-        String username = jwtUtils.getUserNameFromJwtToken(token);
-        UserDetailsImpl userDetails = (UserDetailsImpl) userRepository.findByUsername(
-                                                                              username)
-                                                                      .orElseThrow(() -> new RuntimeException(
-                                                                              "Error: User not found."))
-                                                                      .getRoles();
-
-        List<String> roles = userDetails.getAuthorities()
-                                        .stream()
-                                        .map(item -> item.getAuthority())
-                                        .collect(Collectors.toList());
-
-        return ResponseEntity.ok("OK");
+        return false;
     }
 
     @PostMapping("/refreshtoken")
@@ -199,13 +189,5 @@ public class AuthController {
         userRepository.save(user);
 
         return ResponseEntity.ok(new MessageResponse("Password changed successfully!"));
-    }
-
-    @PostMapping("/signout")
-    public ResponseEntity<?> logoutUser() {
-        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Long userId = userDetails.getId();
-        refreshTokenService.deleteByUserId(userId);
-        return ResponseEntity.ok(new MessageResponse("Log out successful!"));
     }
 }
