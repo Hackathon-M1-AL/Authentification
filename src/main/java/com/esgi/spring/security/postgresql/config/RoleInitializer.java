@@ -1,4 +1,4 @@
-package com.esgi.spring.security.postgresql.config;
+/*package com.esgi.spring.security.postgresql.config;
 
 import com.esgi.spring.security.postgresql.models.ERole;
 import com.esgi.spring.security.postgresql.models.Role;
@@ -29,3 +29,4 @@ public class RoleInitializer {
         }
     }
 }
+*/

@@ -5,16 +5,27 @@ import org.springframework.http.HttpStatus;
 
 public class SecurityException extends JwtException {
 
-    protected String path;
-    protected final int httpStatus;
+    protected       String message;
+    protected       String path;
+    protected final int    httpStatus;
 
-    public SecurityException(String path, String message, final HttpStatus httpStatus) {
+    public SecurityException(String path, String message,
+                             final HttpStatus httpStatus) {
         super(message);
-        this.path = path;
+        this.message    = message;
+        this.path       = path;
         this.httpStatus = httpStatus.value();
     }
 
     public int getHttpStatus() {
         return httpStatus;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public String getMessage() {
+        return message;
     }
 }

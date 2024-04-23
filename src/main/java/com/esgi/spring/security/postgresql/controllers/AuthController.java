@@ -15,7 +15,7 @@ import com.esgi.spring.security.postgresql.security.jwt.JwtUtils;
 import com.esgi.spring.security.postgresql.security.services.RefreshTokenService;
 import com.esgi.spring.security.postgresql.security.services.UserDetailsImpl;
 import com.esgi.spring.security.postgresql.utils.exception.CustomMalformedJwtException;
-import com.esgi.spring.security.postgresql.utils.exception.ExpiredJwtTokenException;
+import com.esgi.spring.security.postgresql.utils.exception.CustomExpiredJwtTokenException;
 import com.esgi.spring.security.postgresql.utils.exception.TokenRefreshException;
 import jakarta.validation.Valid;
 
@@ -137,7 +137,7 @@ public class AuthController {
     @GetMapping("/verifyToken")
     public ResponseEntity<?> verifyToken(@RequestHeader("Authorization")
                                          String authHeader) throws
-                                                            ExpiredJwtTokenException,
+                                                            CustomExpiredJwtTokenException,
                                                             CustomMalformedJwtException {
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -181,8 +181,7 @@ public class AuthController {
                     String token = jwtUtils.generateTokenFromUsername(user.getUsername());
                     return ResponseEntity.ok(new TokenRefreshResponse(token, requestRefreshToken));
                 })
-                .orElseThrow(() -> new TokenRefreshException(requestRefreshToken,
-                        "Refresh token is not in database!"));
+                .orElseThrow(() -> new TokenRefreshException());
     }
 
     @PostMapping("/changepassword")

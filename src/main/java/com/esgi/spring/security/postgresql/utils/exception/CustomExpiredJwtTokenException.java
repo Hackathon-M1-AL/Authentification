@@ -2,10 +2,10 @@ package com.esgi.spring.security.postgresql.utils.exception;
 
 import org.springframework.http.HttpStatus;
 
-public class ExpiredJwtTokenException extends SecurityException {
+public class CustomExpiredJwtTokenException extends SecurityException {
 
 
-    public ExpiredJwtTokenException() {
+    public CustomExpiredJwtTokenException() {
         super("/refresh", "JWT token is expired", HttpStatus.UNAUTHORIZED);
     }
 }
