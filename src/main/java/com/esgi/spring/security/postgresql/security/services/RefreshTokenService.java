@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.esgi.spring.security.postgresql.models.RefreshToken;
+import com.esgi.spring.security.postgresql.models.User;
 import com.esgi.spring.security.postgresql.repository.RefreshTokenRepository;
 import com.esgi.spring.security.postgresql.repository.UserRepository;
 import com.esgi.spring.security.postgresql.utils.exception.TokenRefreshException;
@@ -30,14 +31,26 @@ public class RefreshTokenService {
     }
 
     public RefreshToken createRefreshToken(Long userId) {
-        RefreshToken refreshToken = new RefreshToken();
+        Optional<User> optionalUser = userRepository.findById(userId);
+        if (optionalUser.isEmpty()) {
+            throw new IllegalArgumentException("User not found with ID: " + userId);
+        }
 
-        refreshToken.setUser(userRepository.findById(userId).get());
-        refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
-        refreshToken.setToken(UUID.randomUUID().toString());
-
-        refreshToken = refreshTokenRepository.save(refreshToken);
-        return refreshToken;
+        Optional<RefreshToken> existingToken = refreshTokenRepository.findByUser(optionalUser.get());
+        if (existingToken.isPresent()) {
+            // If a refresh token already exists for the user, update or delete it
+            RefreshToken token = existingToken.get();
+            token.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
+            token.setToken(UUID.randomUUID().toString());
+            return refreshTokenRepository.save(token);
+        } else {
+            // If no refresh token exists, create a new one
+            RefreshToken refreshToken = new RefreshToken();
+            refreshToken.setUser(optionalUser.get());
+            refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
+            refreshToken.setToken(UUID.randomUUID().toString());
+            return refreshTokenRepository.save(refreshToken);
+        }
     }
 
     public RefreshToken verifyExpiration(RefreshToken token) {
