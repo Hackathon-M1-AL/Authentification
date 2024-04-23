@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import com.esgi.spring.security.postgresql.models.ERole;
 import com.esgi.spring.security.postgresql.models.RefreshToken;
+import com.esgi.spring.security.postgresql.payload.request.ChangePasswordRequest;
 import com.esgi.spring.security.postgresql.payload.request.LoginRequest;
 import com.esgi.spring.security.postgresql.payload.request.TokenRefreshRequest;
 import com.esgi.spring.security.postgresql.payload.response.TokenRefreshResponse;
@@ -21,6 +22,7 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -181,6 +183,23 @@ public class AuthController {
                 })
                 .orElseThrow(() -> new TokenRefreshException(requestRefreshToken,
                         "Refresh token is not in database!"));
+    }
+
+    @PostMapping("/changepassword")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')") // Restrict access to authenticated users with USER or ADMIN role
+    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest changePasswordRequest) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = userRepository.findById(userDetails.getId())
+                .orElseThrow(() -> new RuntimeException("Error: User not found."));
+
+        if (!encoder.matches(changePasswordRequest.getOldPassword(), user.getPassword())) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Old password is incorrect."));
+        }
+
+        user.setPassword(encoder.encode(changePasswordRequest.getNewPassword()));
+        userRepository.save(user);
+
+        return ResponseEntity.ok(new MessageResponse("Password changed successfully!"));
     }
 
     @PostMapping("/signout")
