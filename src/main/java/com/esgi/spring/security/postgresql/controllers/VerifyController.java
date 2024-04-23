@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/api/verifyToken")
+@RequestMapping("/api/auth/verify")
 public class VerifyController {
   @GetMapping("/all")
   public String allAccess() {
